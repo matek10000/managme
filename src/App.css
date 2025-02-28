@@ -1,0 +1,132 @@
+/* Globalne ustawienia */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #2d2d2d;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: white;
+}
+
+/* Kontener aplikacji */
+.App {
+  width: 90%;
+  max-width: 600px;
+  background: #3b3b3b;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+/* Nagłówek */
+h1 {
+  font-size: 26px;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+/* Poprawiony formularz */
+.project-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* Poprawione inputy */
+.project-form input, 
+.project-form textarea {
+  width: 90%;
+  max-width: 500px;
+  padding: 12px;
+  border: 1px solid #555;
+  border-radius: 5px;
+  font-size: 16px;
+  background-color: #222;
+  color: white;
+  text-align: left;
+}
+
+/* Placeholdery */
+.project-form input::placeholder,
+.project-form textarea::placeholder {
+  color: #aaa;
+}
+
+/* Przyciski */
+.project-form button {
+  width: 90%; 
+  max-width: 500px;
+  background-color: #007bff;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.project-form button:hover {
+  background-color: #0056b3;
+}
+
+
+/* Lista projektów */
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Karta projektu */
+.project-card {
+  background: #444;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+
+.project-card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.project-card p {
+  margin: 5px 0 10px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* Przycisk usuwania */
+.project-card button {
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.project-card button:hover {
+  background-color: #a71d2a;
+}
+
+/* Stopka */
+.footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #bbb;
+}
