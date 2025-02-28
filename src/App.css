@@ -1,7 +1,7 @@
-/* Globalne ustawienia */
+/* ====== Globalne ustawienia ====== */
 body {
   font-family: Arial, sans-serif;
-  background-color: #2d2d2d;
+  background-color: #2d2d2d; /* Ciemnoszare tło */
   margin: 0;
   padding: 0;
   display: flex;
@@ -9,28 +9,28 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  color: white;
+  color: white; /* Domyślny kolor tekstu */
 }
 
-/* Kontener aplikacji */
+/* ====== Główny kontener aplikacji ====== */
 .App {
   width: 90%;
   max-width: 600px;
-  background: #3b3b3b;
+  background: #3b3b3b; /* Trochę jaśniejsze tło dla treści */
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   text-align: center;
 }
 
-/* Nagłówek */
+/* ====== Nagłówek ====== */
 h1 {
   font-size: 26px;
   margin-bottom: 20px;
-  color: #ffffff;
+  color: #ffffff; /* Biały tekst */
 }
 
-/* Poprawiony formularz */
+/* ====== Formularz ====== */
 .project-form {
   display: flex;
   flex-direction: column;
@@ -40,7 +40,6 @@ h1 {
   width: 100%;
 }
 
-/* Poprawione inputy */
 .project-form input, 
 .project-form textarea {
   width: 90%;
@@ -54,79 +53,135 @@ h1 {
   text-align: left;
 }
 
-/* Placeholdery */
 .project-form input::placeholder,
 .project-form textarea::placeholder {
   color: #aaa;
 }
 
-/* Przyciski */
-.project-form button {
-  width: 90%; 
-  max-width: 500px;
-  background-color: #007bff;
-  color: white;
-  padding: 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.2s;
-}
-
-.project-form button:hover {
-  background-color: #0056b3;
-}
-
-
-/* Lista projektów */
+/* ====== Lista projektów ====== */
 .project-list {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-/* Karta projektu */
+/* ====== Karta projektu ====== */
 .project-card {
-  background: #444;
+  background: #444; /* Ciemniejsze tło */
   padding: 15px;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   text-align: left;
 }
 
+/* Nagłówek projektu */
 .project-card h3 {
   margin: 0;
   font-size: 18px;
   color: #ffffff;
 }
 
+/* Opis projektu */
 .project-card p {
   margin: 5px 0 10px;
   font-size: 14px;
   color: #ccc;
 }
 
-/* Przycisk usuwania */
-.project-card button {
-  background-color: #dc3545;
-  color: white;
-  padding: 8px 12px;
+/* ====== Stylowanie przycisków ====== */
+button {
+  padding: 10px 15px;
   border: none;
   border-radius: 5px;
-  cursor: pointer;
   font-size: 14px;
-  transition: background 0.2s;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin: 5px;
 }
 
-.project-card button:hover {
+button:hover {
+  transform: scale(1.05);
+}
+
+/* Niebieski przycisk "Edytuj" */
+.btn-edit {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #0056b3;
+}
+
+/* Zielony przycisk "Zapisz" */
+.btn-save {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: #218838;
+}
+
+/* Szary przycisk "Anuluj" */
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #5a6268;
+}
+
+/* Czerwony przycisk "Usuń" */
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
   background-color: #a71d2a;
 }
 
-/* Stopka */
+/* ====== Stopka ====== */
 .footer {
   margin-top: 20px;
   text-align: center;
   font-size: 14px;
   color: #bbb;
+}
+
+/* Styl dla formularza edycji */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  background: #555;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Inputy w edycji - poprawiona szerokość */
+.edit-form input,
+.edit-form textarea {
+  width: 100%; /* 🔹 Zapewnia dopasowanie do karty */
+  max-width: 100%; /* 🔹 Nie pozwala wyjść poza kartę */
+  padding: 10px;
+  border: 1px solid #777;
+  border-radius: 5px;
+  font-size: 16px;
+  background-color: #333;
+  color: white;
+  box-sizing: border-box; /* 🔹 Uwzględnia padding w szerokości */
+}
+
+/* Kontener na przyciski */
+.edit-form .button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
 }

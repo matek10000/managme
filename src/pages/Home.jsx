@@ -21,10 +21,14 @@ const Home = () => {
 
     return (
         <div>
-            <h1><b>ManagMe</b></h1>
-            <h3>Zarządzaj swoimi projektami w dowolnym miejscu!</h3>
+            <h1>ManagMe</h1>
+            <h3>Zarządzaj swoimi projektami z jednego miejsca!</h3>
             <ProjectForm onProjectAdded={refreshProjects} />
-            <ProjectList projects={projects} onDelete={handleDelete} />
+            <ProjectList 
+                projects={projects} 
+                onUpdate={refreshProjects} 
+                onDelete={handleDelete} 
+            />
         </div>
     );
 };
