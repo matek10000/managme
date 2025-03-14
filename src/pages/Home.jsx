@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ProjectService from "../services/ProjectService";
 import UserService from "../services/UserService";
 import Stories from "../components/Stories";
+import TaskBoard from "../components/TaskBoard"; // Tablica Kanban
 
 const Home = () => {
     const [projects, setProjects] = useState([]);
@@ -16,7 +17,6 @@ const Home = () => {
         setProjects(ProjectService.getProjects());
         setCurrentProject(ProjectService.getCurrentProject());
 
-        // 🔹 Nasłuchiwanie na zmianę localStorage (np. po zmianie projektu)
         const handleStorageChange = () => {
             setProjects(ProjectService.getProjects());
             setCurrentProject(ProjectService.getCurrentProject());
@@ -50,31 +50,27 @@ const Home = () => {
 
     const handleEditProject = () => {
         if (!currentProject) return;
-    
+
         const updatedProject = { 
             ...currentProject, 
             name, 
             description 
         };
-    
-        // 🔹 Aktualizujemy projekt w localStorage
+
         ProjectService.updateProject(updatedProject);
-    
-        // 🔹 Pobieramy najnowszą listę projektów
+
         const updatedProjects = ProjectService.getProjects();
         setProjects(updatedProjects);
-    
-        // 🔹 Pobieramy zaktualizowany projekt z listy
+
         const refreshedProject = updatedProjects.find(p => p.id === updatedProject.id);
         
         if (refreshedProject) {
-            setCurrentProject(refreshedProject); // Ustawienie zaktualizowanego projektu
-            ProjectService.setCurrentProject(refreshedProject); // Zapisujemy do localStorage
+            setCurrentProject(refreshedProject);
+            ProjectService.setCurrentProject(refreshedProject);
         }
         
         setEditMode(false);
     };
-    
 
     const handleRoleChange = (event) => {
         UserService.updateUserRole(event.target.value);
@@ -82,7 +78,7 @@ const Home = () => {
     };
 
     return (
-        <div>
+        <div className="App">
             <h1>ManagMe - Zarządzanie Projektami</h1>
 
             {/* 🔹 Informacje o użytkowniku */}
@@ -96,18 +92,6 @@ const Home = () => {
                         <option value="developer">Developer</option>
                     </select>
                 </div>
-            </div>
-
-            {/* 🔹 Lista użytkowników */}
-            <div className="user-list">
-                <h3>👥 Lista użytkowników:</h3>
-                <ul>
-                    {users.map(u => (
-                        <li key={u.id}>
-                            {u.name} - <strong>{u.role}</strong>
-                        </li>
-                    ))}
-                </ul>
             </div>
 
             {/* 🔹 Dropdown do wyboru projektu */}
@@ -166,6 +150,9 @@ const Home = () => {
 
                     {/* 🔹 Sekcja historyjek */}
                     <Stories />
+
+                    {/* 🔹 Tablica zadań (Kanban) */}
+                    <TaskBoard projectId={currentProject.id} />
                 </div>
             ) : (
                 <p>Wybierz projekt, aby go wyświetlić.</p>

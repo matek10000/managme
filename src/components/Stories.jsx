@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import ProjectService from "../services/ProjectService";
+import TaskService from "../services/TaskService";
 
 const Stories = () => {
     const [stories, setStories] = useState([]);
     const [filter, setFilter] = useState("all");
     const [newStory, setNewStory] = useState({ name: "", description: "", priority: "medium", status: "todo" });
-    const [editStory, setEditStory] = useState(null); // 🔹 Przechowuje ID edytowanej historyjki
+    const [newTask, setNewTask] = useState({ name: "", description: "", priority: "medium", estimatedTime: 0, storyId: null });
+    const [editStory, setEditStory] = useState(null);
 
     useEffect(() => {
         const loadStories = () => {
@@ -39,7 +41,7 @@ const Stories = () => {
 
         const updatedProject = ProjectService.getCurrentProject();
         setStories(updatedProject?.stories || []);
-        setEditStory(null); // 🔹 Zamknięcie trybu edycji po zapisaniu
+        setEditStory(null);
     };
 
     const handleDeleteStory = (id) => {
@@ -55,6 +57,12 @@ const Stories = () => {
 
     const handleCancelEdit = () => {
         setEditStory(null);
+    };
+
+    const handleAddTask = () => {
+        if (!newTask.name.trim() || !newTask.storyId) return;
+        TaskService.addTask({ ...newTask, projectId: ProjectService.getCurrentProject().id });
+        setNewTask({ name: "", description: "", priority: "medium", estimatedTime: 0, storyId: null });
     };
 
     const filteredStories = filter === "all" ? stories : stories.filter(story => story.status === filter);
@@ -96,13 +104,38 @@ const Stories = () => {
                 <button className="btn-save" onClick={handleAddStory}>Dodaj</button>
             </div>
 
+            {/* 🔹 Formularz dodawania zadań */}
+            <div className="task-form">
+                <h4>Dodaj zadanie</h4>
+                <input
+                    type="text"
+                    placeholder="Nazwa zadania"
+                    value={newTask.name}
+                    onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
+                />
+                <textarea
+                    placeholder="Opis zadania"
+                    value={newTask.description}
+                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                />
+                <select
+                    value={newTask.storyId || ""}
+                    onChange={(e) => setNewTask({ ...newTask, storyId: Number(e.target.value) })}
+                >
+                    <option value="" disabled>Wybierz historyjkę</option>
+                    {stories.map(story => (
+                        <option key={story.id} value={story.id}>{story.name}</option>
+                    ))}
+                </select>
+                <button className="btn-save" onClick={handleAddTask}>Dodaj zadanie</button>
+            </div>
+
             {/* 🔹 Lista historyjek */}
             {filteredStories.length > 0 ? (
                 <ul>
                     {filteredStories.map(story => (
                         <li key={story.id} className="story-card">
                             {editStory === story.id ? (
-                                // 🔹 Formularz edycji
                                 <div className="edit-story">
                                     <input
                                         type="text"
@@ -135,21 +168,16 @@ const Stories = () => {
                                     </div>
                                 </div>
                             ) : (
-                                // 🔹 Widok standardowy historyjki
                                 <>
                                     <p><strong>{story.name}</strong></p>
                                     <p>📝 {story.description}</p>
                                     <p>🚀 Priorytet: {story.priority}</p>
                                     <p>📌 Status: {story.status}</p>
-
-                                    {/* 🔹 Zmiana statusu */}
                                     <select value={story.status} onChange={(e) => handleUpdateStory(story.id, { status: e.target.value })}>
                                         <option value="todo">Do zrobienia</option>
                                         <option value="doing">W trakcie</option>
                                         <option value="done">Zakończone</option>
                                     </select>
-
-                                    {/* 🔹 Przyciski */}
                                     <div className="button-group">
                                         <button className="btn-edit" onClick={() => handleEditClick(story)}>Edytuj</button>
                                         <button className="btn-delete" onClick={() => handleDeleteStory(story.id)}>Usuń</button>
