@@ -18,6 +18,16 @@ class ProjectService {
         window.dispatchEvent(new Event("storage")); // 🔹 Powiadomienie o zmianie projektu
     }
 
+    static updateProject(updatedProject) {
+        let projects = this.getProjects();
+
+        // 🔹 Aktualizujemy projekt w liście
+        projects = projects.map(p => (p.id === updatedProject.id ? updatedProject : p));
+
+        this.saveProjects(projects);
+        this.setCurrentProject(updatedProject); // 🔹 Aktualizujemy także currentProject
+    }
+
     static addStory(story) {
         let project = this.getCurrentProject();
         if (!project) return;

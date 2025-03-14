@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import ProjectService from "../services/ProjectService";
+import UserService from "../services/UserService";
 import Stories from "../components/Stories";
 
 const Home = () => {
@@ -8,6 +9,8 @@ const Home = () => {
     const [editMode, setEditMode] = useState(false);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [user, setUser] = useState(UserService.getUser());
+    const [users, setUsers] = useState(UserService.getUsers());
 
     useEffect(() => {
         setProjects(ProjectService.getProjects());
@@ -17,6 +20,8 @@ const Home = () => {
         const handleStorageChange = () => {
             setProjects(ProjectService.getProjects());
             setCurrentProject(ProjectService.getCurrentProject());
+            setUser(UserService.getUser());
+            setUsers(UserService.getUsers());
         };
 
         window.addEventListener("storage", handleStorageChange);
@@ -29,7 +34,7 @@ const Home = () => {
 
         if (selectedProject) {
             ProjectService.setCurrentProject(selectedProject);
-            setCurrentProject({ ...selectedProject }); // 🔹 Wymuszenie aktualizacji stanu
+            setCurrentProject({ ...selectedProject });
             setEditMode(false);
         }
     };
@@ -39,23 +44,71 @@ const Home = () => {
 
         ProjectService.deleteProject(currentProject.id);
         setProjects(ProjectService.getProjects());
-        setCurrentProject(null); // Reset wyboru po usunięciu
+        setCurrentProject(null);
         setEditMode(false);
     };
 
     const handleEditProject = () => {
         if (!currentProject) return;
-
-        const updatedProject = { ...currentProject, name, description };
+    
+        const updatedProject = { 
+            ...currentProject, 
+            name, 
+            description 
+        };
+    
+        // 🔹 Aktualizujemy projekt w localStorage
         ProjectService.updateProject(updatedProject);
-        setProjects(ProjectService.getProjects());
-        setCurrentProject(updatedProject);
+    
+        // 🔹 Pobieramy najnowszą listę projektów
+        const updatedProjects = ProjectService.getProjects();
+        setProjects(updatedProjects);
+    
+        // 🔹 Pobieramy zaktualizowany projekt z listy
+        const refreshedProject = updatedProjects.find(p => p.id === updatedProject.id);
+        
+        if (refreshedProject) {
+            setCurrentProject(refreshedProject); // Ustawienie zaktualizowanego projektu
+            ProjectService.setCurrentProject(refreshedProject); // Zapisujemy do localStorage
+        }
+        
         setEditMode(false);
+    };
+    
+
+    const handleRoleChange = (event) => {
+        UserService.updateUserRole(event.target.value);
+        setUser(UserService.getUser());
     };
 
     return (
         <div>
             <h1>ManagMe - Zarządzanie Projektami</h1>
+
+            {/* 🔹 Informacje o użytkowniku */}
+            <div className="user-info">
+                <p>👤 {user.name} ({user.role})</p>
+                <div className="user-role">
+                    <label htmlFor="roleSelect">Rola:</label>
+                    <select id="roleSelect" value={user.role} onChange={handleRoleChange}>
+                        <option value="admin">Admin</option>
+                        <option value="devops">DevOps</option>
+                        <option value="developer">Developer</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* 🔹 Lista użytkowników */}
+            <div className="user-list">
+                <h3>👥 Lista użytkowników:</h3>
+                <ul>
+                    {users.map(u => (
+                        <li key={u.id}>
+                            {u.name} - <strong>{u.role}</strong>
+                        </li>
+                    ))}
+                </ul>
+            </div>
 
             {/* 🔹 Dropdown do wyboru projektu */}
             <div className="project-dropdown">
