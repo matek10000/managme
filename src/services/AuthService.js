@@ -12,21 +12,16 @@ const login = async (login, password) => {
         throw new Error(err.error || "Błąd logowania");
     }
 
-    const { accessToken, refreshToken } = await response.json();
+    const { accessToken, refreshToken, user } = await response.json();
 
-    // Od teraz user to obiekt, który sami tworzymy z danych zakodowanych w tokenie
-    const userPayload = JSON.parse(atob(accessToken.split('.')[1])); // dekodujemy JWT
-    const user = {
-        id: userPayload.id,
-        role: userPayload.role,
-        login: login
-    };
+    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+    const expiresAt = payload.exp * 1000; // ms
 
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify({ ...user, expiresAt }));
 
-    return user;
+    return { ...user, expiresAt };
 };
 
 const logout = () => {
@@ -47,9 +42,16 @@ const getUser = () => {
     }
 };
 
+const getSessionTimeLeft = () => {
+    const user = getUser();
+    if (!user || !user.expiresAt) return 0;
+    return user.expiresAt - Date.now();
+};
+
 export default {
     login,
     logout,
     getToken,
     getUser,
+    getSessionTimeLeft
 };

@@ -1,5 +1,35 @@
 [
-    { "id": 1, "login": "admin", "password": "admin123", "role": "admin" },
-    { "id": 2, "login": "developer", "password": "dev123", "role": "developer" },
-    { "id": 3, "login": "devops", "password": "dev123", "role": "devops" }
-]
+    {
+      "id": 1,
+      "login": "admin",
+      "password": "admin123",
+      "role": "admin",
+      "firstName": "Mateusz",
+      "lastName": "Dybaś"
+    },
+    {
+      "id": 2,
+      "login": "developer",
+      "password": "dev123",
+      "role": "developer",
+      "firstName": "Kamil",
+      "lastName": "Nowak"
+    },
+    {
+      "id": 3,
+      "login": "devops",
+      "password": "dev123",
+      "role": "devops",
+      "firstName": "Agnieszka",
+      "lastName": "Kowalska"
+    },
+    {
+        "id": 4,
+        "login": "developer2",
+        "password": "dev123",
+        "role": "devops",
+        "firstName": "Tomasz",
+        "lastName": "Gawor"
+    }
+  ]
+  

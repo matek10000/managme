@@ -4,10 +4,21 @@ import UserService from "../services/UserService";
 
 const TaskBoard = ({ projectId }) => {
     const [tasks, setTasks] = useState([]);
-    const [users, setUsers] = useState(UserService.getUsers());
+    const [users, setUsers] = useState([]);
 
     useEffect(() => {
         setTasks(TaskService.getTasksForProject(projectId));
+
+        const fetchUsersFromAPI = async () => {
+            try {
+                const usersFromApi = await UserService.fetchUsers();
+                setUsers(usersFromApi);
+            } catch (err) {
+                console.error("Błąd podczas pobierania użytkowników:", err);
+            }
+        };
+
+        fetchUsersFromAPI();
 
         const handleStorageChange = () => {
             setTasks(TaskService.getTasksForProject(projectId));
@@ -45,14 +56,16 @@ const TaskBoard = ({ projectId }) => {
                                 <p>📌 Priorytet: {task.priority}</p>
                                 <p>🕒 Przewidywany czas: {task.estimatedTime}h</p>
                                 {task.assignedUser ? (
-                                    <p>👤 {users.find(u => u.id === task.assignedUser)?.name}</p>
+                                    <p>👤 {users.find(u => u.id === task.assignedUser)?.firstName} {users.find(u => u.id === task.assignedUser)?.lastName}</p>
                                 ) : (
                                     <select onChange={(e) => handleAssignUser(task.id, Number(e.target.value))}>
                                         <option value="">Wybierz użytkownika</option>
                                         {users
                                             .filter(user => ["devops", "developer"].includes(user.role))
                                             .map(user => (
-                                                <option key={user.id} value={user.id}>{user.name}</option>
+                                                <option key={user.id} value={user.id}>
+                                                    {user.firstName} {user.lastName}
+                                                </option>
                                             ))}
                                     </select>
                                 )}

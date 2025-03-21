@@ -1,22 +1,27 @@
+// src/services/UserService.js
+
+const API_URL = "http://localhost:5001";
+
 class UserService {
+    // 🔹 Pobierz wszystkich użytkowników z API
+    static async fetchUsers() {
+        const response = await fetch(`${API_URL}/users`);
+        if (!response.ok) {
+            throw new Error("Nie udało się pobrać użytkowników");
+        }
+        const users = await response.json();
+        localStorage.setItem("users", JSON.stringify(users));
+        return users;
+    }
+
     static getUsers() {
         const users = localStorage.getItem("users");
-        if (users) return JSON.parse(users);
-
-        // 🔹 Mock użytkowników jeśli nie ma ich w localStorage
-        const defaultUsers = [
-            { id: 1, name: "Mateusz Dybaś", role: "admin" },
-            { id: 2, name: "Kamil Nowak", role: "developer" },
-            { id: 3, name: "Agnieszka Kowalska", role: "devops" }
-        ];
-
-        localStorage.setItem("users", JSON.stringify(defaultUsers));
-        return defaultUsers;
+        return users ? JSON.parse(users) : [];
     }
 
     static getUser() {
         const user = localStorage.getItem("user");
-        return user ? JSON.parse(user) : { id: 1, name: "Mateusz Dybaś", role: "admin" };
+        return user ? JSON.parse(user) : null;
     }
 
     static setUser(user) {
@@ -25,6 +30,8 @@ class UserService {
 
     static updateUserRole(role) {
         let user = this.getUser();
+        if (!user) return;
+        
         user.role = role;
         this.setUser(user);
 
