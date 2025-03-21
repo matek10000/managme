@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ProjectService from "../services/ProjectService";
 import UserService from "../services/UserService";
 import Stories from "../components/Stories";
-import TaskBoard from "../components/TaskBoard"; // Tablica Kanban
+import TaskBoard from "../components/TaskBoard";
 
 const Home = () => {
     const [projects, setProjects] = useState([]);
