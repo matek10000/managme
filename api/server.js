@@ -27,7 +27,7 @@ app.post("/login", (req, res) => {
     const users = getUsers();
 
     const user = users.find(u => u.login === login);
-    if (!user || !bcrypt.compareSync(password, user.password)) {
+    if (!user || user.password !== password) {
         return res.status(401).json({ error: "Nieprawidłowe dane logowania!" });
     }
 
@@ -35,7 +35,16 @@ app.post("/login", (req, res) => {
     const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: "7d" });
 
     refreshTokens.push(refreshToken);
-    res.json({ accessToken, refreshToken });
+
+    res.json({
+        accessToken,
+        refreshToken,
+        user: {
+            id: user.id,
+            login: user.login,
+            role: user.role,
+        },
+    });
 });
 
 // 🔄 Odświeżanie tokenu
@@ -54,6 +63,5 @@ app.post("/refresh", (req, res) => {
     });
 });
 
-// Uruchomienie serwera
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`✅ API działa na http://localhost:${PORT}`));

@@ -72,11 +72,6 @@ const Home = () => {
         setEditMode(false);
     };
 
-    const handleRoleChange = (event) => {
-        UserService.updateUserRole(event.target.value);
-        setUser(UserService.getUser());
-    };
-
     return (
         <div className="App">
             <h1>ManagMe - Zarządzanie Projektami</h1>
@@ -84,14 +79,6 @@ const Home = () => {
             {/* 🔹 Informacje o użytkowniku */}
             <div className="user-info">
                 <p>👤 {user.name} ({user.role})</p>
-                <div className="user-role">
-                    <label htmlFor="roleSelect">Rola:</label>
-                    <select id="roleSelect" value={user.role} onChange={handleRoleChange}>
-                        <option value="admin">Admin</option>
-                        <option value="devops">DevOps</option>
-                        <option value="developer">Developer</option>
-                    </select>
-                </div>
             </div>
 
             {/* 🔹 Dropdown do wyboru projektu */}
