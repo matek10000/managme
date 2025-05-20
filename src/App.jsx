@@ -49,10 +49,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 p-6">
+    <div className="min-h-screen flex flex-col items-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
       {user ? (
         <>
-          <header className="w-full max-w-4xl bg-gray-800 dark:bg-gray-200 p-4 rounded mb-6 flex items-center justify-between space-x-2">
+          <header className="w-full max-w-4xl bg-gray-200 dark:bg-gray-800 p-4 rounded mb-6 flex items-center justify-between space-x-2">
             <div>
               <p>
                 Zalogowany jako:{" "}

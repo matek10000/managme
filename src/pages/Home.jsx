@@ -60,7 +60,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6 space-y-6">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Nagłówek */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between">

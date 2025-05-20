@@ -98,7 +98,7 @@ export default function Stories() {
       </div>
 
       {/* Add Story Form */}
-      <div className="flex flex-wrap items-end gap-4 bg-gray-100 dark:bg-gray-700 p-4 rounded shadow-sm">
+      <div className="flex flex-wrap items-end gap-4 bg-gray-100 dark:bg-gray-900 p-4 rounded shadow-sm">
         <input
           type="text"
           value={newStory.name}
