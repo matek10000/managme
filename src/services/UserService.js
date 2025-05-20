@@ -1,44 +1,20 @@
-// src/services/UserService.js
+const USER_KEY = "fm_user"
 
-const API_URL = "http://localhost:5001";
-
-class UserService {
-    // 🔹 Pobierz wszystkich użytkowników z API
-    static async fetchUsers() {
-        const response = await fetch(`${API_URL}/users`);
-        if (!response.ok) {
-            throw new Error("Nie udało się pobrać użytkowników");
-        }
-        const users = await response.json();
-        localStorage.setItem("users", JSON.stringify(users));
-        return users;
+export default {
+  getUser: () => {
+    try {
+      return JSON.parse(localStorage.getItem(USER_KEY))
+    } catch {
+      return null
     }
-
-    static getUsers() {
-        const users = localStorage.getItem("users");
-        return users ? JSON.parse(users) : [];
-    }
-
-    static getUser() {
-        const user = localStorage.getItem("user");
-        return user ? JSON.parse(user) : null;
-    }
-
-    static setUser(user) {
-        localStorage.setItem("user", JSON.stringify(user));
-    }
-
-    static updateUserRole(role) {
-        let user = this.getUser();
-        if (!user) return;
-        
-        user.role = role;
-        this.setUser(user);
-
-        let users = this.getUsers();
-        users = users.map(u => (u.id === user.id ? { ...u, role } : u));
-        localStorage.setItem("users", JSON.stringify(users));
-    }
+  },
+  setUser: (u) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(u))
+  },
+  updateUserRole: (newRole) => {
+    const u = JSON.parse(localStorage.getItem(USER_KEY))
+    if (!u) return
+    u.role = newRole
+    localStorage.setItem(USER_KEY, JSON.stringify(u))
+  }
 }
-
-export default UserService;

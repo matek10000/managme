@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from "react"
 import Home from "./pages/Home"
 import LoginPage from "./pages/LoginPage"
@@ -7,45 +6,16 @@ import ThemeToggle from "./components/ThemeToggle"
 
 function App() {
   const [user, setUser] = useState(null)
-  const [sessionTime, setSessionTime] = useState(null)
 
   useEffect(() => {
-    const u = AuthService.getUser()
-    if (u) {
+    const unsubscribe = AuthService.onAuthChange((u) => {
       setUser(u)
-      updateCountdown()
-    }
-    const iv = setInterval(updateCountdown, 1000)
-    return () => clearInterval(iv)
+    })
+    return unsubscribe
   }, [])
-
-  const updateCountdown = () => {
-    const ms = AuthService.getSessionTimeLeft()
-    if (ms <= 0) {
-      AuthService.logout()
-      setUser(null)
-      setSessionTime(null)
-    } else {
-      setSessionTime(ms)
-    }
-  }
-
-  const handleLogin = (u) => {
-    setUser(u)
-    updateCountdown()
-  }
 
   const handleLogout = () => {
     AuthService.logout()
-    setUser(null)
-    setSessionTime(null)
-  }
-
-  const formatTime = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000)
-    const minutes = Math.floor(totalSeconds / 60)
-    const seconds = totalSeconds % 60
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
   return (
@@ -56,14 +26,7 @@ function App() {
             <div>
               <p>
                 Zalogowany jako:{" "}
-                <strong>
-                  {user.firstName} {user.lastName}
-                </strong>{" "}
-                ({user.role})
-              </p>
-              <p>
-                Sesja wygaśnie za:{" "}
-                <strong>{formatTime(sessionTime)}</strong>
+                <strong>{user.displayName || user.email}</strong> ({user.role})
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -86,7 +49,7 @@ function App() {
           </footer>
         </>
       ) : (
-        <LoginPage onLogin={handleLogin} />
+        <LoginPage />
       )}
     </div>
   )
