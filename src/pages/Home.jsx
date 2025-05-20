@@ -3,7 +3,7 @@ import ProjectService from "../services/ProjectService"
 import AuthService from "../services/AuthService"
 import Stories from "../components/Stories"
 import TaskBoard from "../components/TaskBoard"
-import ThemeToggle from "../components/ThemeToggle"
+import ProjectForm from "../components/ProjectForm"
 
 export default function Home() {
   const [projects, setProjects] = useState([])
@@ -15,16 +15,17 @@ export default function Home() {
   const user = AuthService.getUser()
   const isGuest = user?.role === "guest"
 
-  // Załaduj wszystkie projekty
+  // Załaduj listę projektów
+  const loadProjects = async () => {
+    const all = await ProjectService.getProjects()
+    setProjects(all)
+  }
+
   useEffect(() => {
-    async function load() {
-      const all = await ProjectService.getProjects()
-      setProjects(all)
-    }
-    load()
+    loadProjects()
   }, [])
 
-  // Gdy wybierzesz projekt, pobierz jego szczegóły
+  // Kiedy wybierzesz z dropdowna
   const handleSelectProject = async (e) => {
     const id = e.target.value
     if (!id) {
@@ -36,52 +37,30 @@ export default function Home() {
     setEditMode(false)
   }
 
+  //Usuń
   const handleDeleteProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.deleteProject(currentProject.id)
-    const all = await ProjectService.getProjects()
-    setProjects(all)
+    await loadProjects()
     setCurrentProject(null)
     setEditMode(false)
   }
 
+  //Edytuj
   const handleEditProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.updateProject(currentProject.id, { name, description })
     const updated = await ProjectService.getProject(currentProject.id)
     setCurrentProject(updated)
-    const all = await ProjectService.getProjects()
-    setProjects(all)
+    await loadProjects()
     setEditMode(false)
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Nagłówek */}
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold">ManagMe</h1>
-            <p className="mt-1 text-gray-600 dark:text-gray-400">
-              Zarządzanie Projektami
-            </p>
-          </div>
-          <div className="mt-4 md:mt-0 flex items-center gap-3">
-            <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-full text-sm">
-              <svg
-                className="w-5 h-5 text-gray-600 dark:text-gray-300"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M10 2a4 4 0 110 8 4 4 0 010-8zM2 18a8 8 0 1116 0H2z" />
-              </svg>
-              <span>
-                {user.displayName || user.email} ({user.role})
-              </span>
-            </span>
-            <ThemeToggle />
-          </div>
-        </header>
+        {/* Dodawanie projektu */}
+        <ProjectForm onProjectAdded={loadProjects} />
 
         {/* Wybór projektu */}
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -161,13 +140,13 @@ export default function Home() {
                         }}
                         className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
                       >
-                        Edytuj
+                        Edytuj projekt
                       </button>
                       <button
                         onClick={handleDeleteProject}
                         className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded"
                       >
-                        Usuń
+                        Usuń projekt
                       </button>
                     </div>
                   )}
@@ -181,7 +160,7 @@ export default function Home() {
 
                 {/* Tablica zadań */}
                 <section>
-                  <h3 className="text-xl font-semibold mb-2">📋 Tablica zadań</h3>
+                  <h3 className="text-xl font-semibold mb-2">📋 Zadania</h3>
                   <TaskBoard projectId={currentProject.id} />
                 </section>
               </div>

@@ -9,7 +9,7 @@ import {
   import { auth, googleProvider } from "../firebase"
   
   const USER_KEY = "fm_user"
-  const ADMIN_EMAIL = "mateusz.dybas10@gmail.com"  // <-- ustaw tutaj swój adres admina
+  const ADMIN_EMAIL = "matekofficial@interia.pl"  // <-- ustaw tutaj swój adres admina
   
   export default {
     // Google OAuth
