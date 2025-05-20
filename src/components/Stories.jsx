@@ -1,197 +1,240 @@
-import { useState, useEffect } from "react";
-import ProjectService from "../services/ProjectService";
-import TaskService from "../services/TaskService";
+// src/components/Stories.jsx
+import React, { useState, useEffect } from "react"
+import ProjectService from "../services/ProjectService"
 
-const Stories = () => {
-    const [stories, setStories] = useState([]);
-    const [filter, setFilter] = useState("all");
-    const [newStory, setNewStory] = useState({ name: "", description: "", priority: "medium", status: "todo" });
-    const [newTask, setNewTask] = useState({ name: "", description: "", priority: "medium", estimatedTime: 0, storyId: null });
-    const [editStory, setEditStory] = useState(null);
+export default function Stories() {
+  const [stories, setStories] = useState([])
+  const [filter, setFilter] = useState("all")
+  const [newStory, setNewStory] = useState({
+    name: "",
+    description: "",
+    priority: "medium",
+    status: "todo",
+  })
+  const [editingId, setEditingId] = useState(null)
+  const [editFields, setEditFields] = useState({
+    name: "",
+    description: "",
+    priority: "medium",
+    status: "todo",
+  })
 
-    useEffect(() => {
-        const loadStories = () => {
-            const currentProject = ProjectService.getCurrentProject();
-            setStories(currentProject?.stories || []);
-        };
+  // Load on mount and on storage changes
+  useEffect(() => {
+    const load = () => {
+      const proj = ProjectService.getCurrentProject()
+      setStories(proj?.stories || [])
+    }
+    load()
+    window.addEventListener("storage", load)
+    return () => window.removeEventListener("storage", load)
+  }, [])
 
-        loadStories();
+  // Add new story
+  const handleAdd = () => {
+    if (!newStory.name.trim()) return
+    ProjectService.addStory(newStory)
+    const proj = ProjectService.getCurrentProject()
+    setStories(proj?.stories || [])
+    setNewStory({ name: "", description: "", priority: "medium", status: "todo" })
+  }
 
-        const handleStorageChange = () => {
-            loadStories();
-        };
+  // Begin editing
+  const startEdit = (story) => {
+    setEditingId(story.id)
+    setEditFields({
+      name: story.name,
+      description: story.description,
+      priority: story.priority,
+      status: story.status,
+    })
+  }
 
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
+  // Save edits
+  const handleSave = (id) => {
+    ProjectService.updateStory({ id, ...editFields })
+    const proj = ProjectService.getCurrentProject()
+    setStories(proj?.stories || [])
+    setEditingId(null)
+  }
 
-    const handleAddStory = () => {
-        if (!newStory.name.trim()) return;
+  // Cancel edit
+  const handleCancel = () => {
+    setEditingId(null)
+  }
 
-        ProjectService.addStory(newStory);
-        setNewStory({ name: "", description: "", priority: "medium", status: "todo" });
+  // Delete story
+  const handleDelete = (id) => {
+    ProjectService.deleteStory(id)
+    const proj = ProjectService.getCurrentProject()
+    setStories(proj?.stories || [])
+  }
 
-        const updatedProject = ProjectService.getCurrentProject();
-        setStories(updatedProject?.stories || []);
-    };
+  // Filtered list
+  const filtered = stories.filter(s => filter === "all" || s.status === filter)
 
-    const handleUpdateStory = (id, updatedFields) => {
-        const updatedStory = { ...stories.find(s => s.id === id), ...updatedFields };
-        ProjectService.updateStory(updatedStory);
+  return (
+    <div className="space-y-6">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          ["all", "Wszystkie"],
+          ["todo", "Do zrobienia"],
+          ["doing", "W trakcie"],
+          ["done", "Zakończone"],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            className={`px-3 py-1 rounded-full text-sm ${
+              filter === key
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        const updatedProject = ProjectService.getCurrentProject();
-        setStories(updatedProject?.stories || []);
-        setEditStory(null);
-    };
+      {/* Add Story Form */}
+      <div className="flex flex-wrap items-end gap-4 bg-gray-100 dark:bg-gray-700 p-4 rounded shadow-sm">
+        <input
+          type="text"
+          value={newStory.name}
+          onChange={e => setNewStory({ ...newStory, name: e.target.value })}
+          placeholder="Nazwa historyjki"
+          className="flex-1 px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:ring-2 focus:ring-blue-400"
+        />
+        <input
+          type="text"
+          value={newStory.description}
+          onChange={e => setNewStory({ ...newStory, description: e.target.value })}
+          placeholder="Opis historyjki"
+          className="flex-1 px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:ring-2 focus:ring-blue-400"
+        />
+        <select
+          value={newStory.priority}
+          onChange={e => setNewStory({ ...newStory, priority: e.target.value })}
+          className="px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:ring-2 focus:ring-blue-400"
+        >
+          <option value="low">Niski</option>
+          <option value="medium">Średni</option>
+          <option value="high">Wysoki</option>
+        </select>
+        <select
+          value={newStory.status}
+          onChange={e => setNewStory({ ...newStory, status: e.target.value })}
+          className="px-2 py-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded focus:ring-2 focus:ring-blue-400"
+        >
+          <option value="todo">Do zrobienia</option>
+          <option value="doing">W trakcie</option>
+          <option value="done">Zakończone</option>
+        </select>
+        <button
+          onClick={handleAdd}
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
+        >
+          Dodaj
+        </button>
+      </div>
 
-    const handleDeleteStory = (id) => {
-        ProjectService.deleteStory(id);
-
-        const updatedProject = ProjectService.getCurrentProject();
-        setStories(updatedProject?.stories || []);
-    };
-
-    const handleEditClick = (story) => {
-        setEditStory(story.id);
-    };
-
-    const handleCancelEdit = () => {
-        setEditStory(null);
-    };
-
-    const handleAddTask = () => {
-        if (!newTask.name.trim() || !newTask.storyId) return;
-        TaskService.addTask({ ...newTask, projectId: ProjectService.getCurrentProject().id });
-        setNewTask({ name: "", description: "", priority: "medium", estimatedTime: 0, storyId: null });
-    };
-
-    const filteredStories = filter === "all" ? stories : stories.filter(story => story.status === filter);
-
-    return (
-        <div className="stories-container">
-            <h3>📜 Historyjki</h3>
-
-            {/* 🔹 Filtr */}
-            <div className="filter-buttons">
-                <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>Wszystkie</button>
-                <button className={filter === "todo" ? "active" : ""} onClick={() => setFilter("todo")}>Do zrobienia</button>
-                <button className={filter === "doing" ? "active" : ""} onClick={() => setFilter("doing")}>W trakcie</button>
-                <button className={filter === "done" ? "active" : ""} onClick={() => setFilter("done")}>Zakończone</button>
-            </div>
-
-            {/* 🔹 Formularz dodawania historyjek */}
-            <div className="story-form">
-                <input
-                    type="text"
-                    placeholder="Nazwa historyjki"
-                    value={newStory.name}
-                    onChange={(e) => setNewStory({ ...newStory, name: e.target.value })}
-                />
-                <input
-                    type="text"
-                    placeholder="Opis historyjki"
-                    value={newStory.description}
-                    onChange={(e) => setNewStory({ ...newStory, description: e.target.value })}
-                />
-                <select
-                    value={newStory.priority}
-                    onChange={(e) => setNewStory({ ...newStory, priority: e.target.value })}
-                >
-                    <option value="low">Niski</option>
-                    <option value="medium">Średni</option>
-                    <option value="high">Wysoki</option>
-                </select>
-                <button className="btn-save" onClick={handleAddStory}>Dodaj</button>
-            </div>
-
-            {/* 🔹 Formularz dodawania zadań */}
-            <div className="task-form">
-                <h4>Dodaj zadanie</h4>
-                <input
-                    type="text"
-                    placeholder="Nazwa zadania"
-                    value={newTask.name}
-                    onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
-                />
-                <textarea
-                    placeholder="Opis zadania"
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                />
-                <select
-                    value={newTask.storyId || ""}
-                    onChange={(e) => setNewTask({ ...newTask, storyId: Number(e.target.value) })}
-                >
-                    <option value="" disabled>Wybierz historyjkę</option>
-                    {stories.map(story => (
-                        <option key={story.id} value={story.id}>{story.name}</option>
-                    ))}
-                </select>
-                <button className="btn-save" onClick={handleAddTask}>Dodaj zadanie</button>
-            </div>
-
-            {/* 🔹 Lista historyjek */}
-            {filteredStories.length > 0 ? (
-                <ul>
-                    {filteredStories.map(story => (
-                        <li key={story.id} className="story-card">
-                            {editStory === story.id ? (
-                                <div className="edit-story">
-                                    <input
-                                        type="text"
-                                        value={story.name}
-                                        onChange={(e) => handleUpdateStory(story.id, { name: e.target.value })}
-                                    />
-                                    <textarea
-                                        value={story.description}
-                                        onChange={(e) => handleUpdateStory(story.id, { description: e.target.value })}
-                                    />
-                                    <select
-                                        value={story.priority}
-                                        onChange={(e) => handleUpdateStory(story.id, { priority: e.target.value })}
-                                    >
-                                        <option value="low">Niski</option>
-                                        <option value="medium">Średni</option>
-                                        <option value="high">Wysoki</option>
-                                    </select>
-                                    <select
-                                        value={story.status}
-                                        onChange={(e) => handleUpdateStory(story.id, { status: e.target.value })}
-                                    >
-                                        <option value="todo">Do zrobienia</option>
-                                        <option value="doing">W trakcie</option>
-                                        <option value="done">Zakończone</option>
-                                    </select>
-                                    <div className="button-group">
-                                        <button className="btn-save" onClick={() => handleUpdateStory(story.id, {})}>Zapisz</button>
-                                        <button className="btn-cancel" onClick={handleCancelEdit}>Anuluj</button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <p><strong>{story.name}</strong></p>
-                                    <p>📝 {story.description}</p>
-                                    <p>🚀 Priorytet: {story.priority}</p>
-                                    <p>📌 Status: {story.status}</p>
-                                    <select value={story.status} onChange={(e) => handleUpdateStory(story.id, { status: e.target.value })}>
-                                        <option value="todo">Do zrobienia</option>
-                                        <option value="doing">W trakcie</option>
-                                        <option value="done">Zakończone</option>
-                                    </select>
-                                    <div className="button-group">
-                                        <button className="btn-edit" onClick={() => handleEditClick(story)}>Edytuj</button>
-                                        <button className="btn-delete" onClick={() => handleDeleteStory(story.id)}>Usuń</button>
-                                    </div>
-                                </>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p>Brak historyjek w tej kategorii.</p>
-            )}
-        </div>
-    );
-};
-
-export default Stories;
+      {/* Story List */}
+      <ul className="space-y-3">
+        {filtered.length > 0 ? (
+          filtered.map(story => (
+            <li
+              key={story.id}
+              className="bg-white dark:bg-gray-800 p-4 rounded shadow flex flex-col md:flex-row justify-between gap-4"
+            >
+              <div className="flex-1 space-y-1">
+                {editingId === story.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editFields.name}
+                      onChange={e => setEditFields(f => ({ ...f, name: e.target.value }))}
+                      className="w-full px-2 py-1 bg-gray-100 dark:bg-gray-600 border rounded"
+                    />
+                    <input
+                      type="text"
+                      value={editFields.description}
+                      onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))}
+                      className="w-full px-2 py-1 bg-gray-100 dark:bg-gray-600 border rounded"
+                    />
+                    <div className="flex gap-2">
+                      <select
+                        value={editFields.priority}
+                        onChange={e => setEditFields(f => ({ ...f, priority: e.target.value }))}
+                        className="px-2 py-1 bg-gray-100 dark:bg-gray-600 border rounded"
+                      >
+                        <option value="low">Niski</option>
+                        <option value="medium">Średni</option>
+                        <option value="high">Wysoki</option>
+                      </select>
+                      <select
+                        value={editFields.status}
+                        onChange={e => setEditFields(f => ({ ...f, status: e.target.value }))}
+                        className="px-2 py-1 bg-gray-100 dark:bg-gray-600 border rounded"
+                      >
+                        <option value="todo">Do zrobienia</option>
+                        <option value="doing">W trakcie</option>
+                        <option value="done">Zakończone</option>
+                      </select>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="font-semibold">{story.name}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{story.description}</p>
+                    <p className="text-xs">
+                      Priorytet: <span className="font-medium">{story.priority}</span>
+                    </p>
+                    <p className="text-xs">
+                      Status: <span className="font-medium">{story.status}</span>
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                {editingId === story.id ? (
+                  <>
+                    <button
+                      onClick={() => handleSave(story.id)}
+                      className="px-3 py-1 bg-green-600 text-white rounded"
+                    >
+                      Zapisz
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="px-3 py-1 bg-gray-400 dark:bg-gray-600 text-white rounded"
+                    >
+                      Anuluj
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => startEdit(story)}
+                      className="px-3 py-1 bg-blue-600 text-white rounded"
+                    >
+                      Edytuj
+                    </button>
+                    <button
+                      onClick={() => handleDelete(story.id)}
+                      className="px-3 py-1 bg-red-600 text-white rounded"
+                    >
+                      Usuń
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          ))
+        ) : (
+          <li className="text-center text-gray-500">Brak historii w tej kategorii.</li>
+        )}
+      </ul>
+    </div>
+  )
+}
