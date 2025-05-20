@@ -9,51 +9,52 @@ export default function TaskBoard({ projectId }) {
   const isGuest = user?.role === "guest"
 
   useEffect(() => {
-    setTasks(TaskService.getTasksForProject(projectId))
-    const onStorage = () => {
-      setTasks(TaskService.getTasksForProject(projectId))
+    if (!projectId) return
+    async function load() {
+      const t = await TaskService.getTasksForProject(projectId)
+      setTasks(t)
     }
-    window.addEventListener("storage", onStorage)
-    return () => window.removeEventListener("storage", onStorage)
+    load()
   }, [projectId])
 
-  const handleComplete = (id) => {
-    if (isGuest) return
-    TaskService.completeTask(id)
-    setTasks(TaskService.getTasksForProject(projectId))
+  const refresh = async () => {
+    const t = await TaskService.getTasksForProject(projectId)
+    setTasks(t)
   }
 
-  const handleDelete = (id) => {
+  const handleComplete = async (id) => {
     if (isGuest) return
-    TaskService.deleteTask(id)
-    setTasks(TaskService.getTasksForProject(projectId))
+    await TaskService.updateTask(id, { status: "done", endDate: Date.now() })
+    await refresh()
   }
 
-  const columns = [
-    { key: "todo", title: "To Do" },
-    { key: "doing", title: "In Progress" },
-    { key: "done", title: "Done" },
-  ]
+  const handleDelete = async (id) => {
+    if (isGuest) return
+    await TaskService.deleteTask(id)
+    await refresh()
+  }
+
+  const columns = ["todo", "doing", "done"]
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map((col) => (
+        {columns.map(status => (
           <div
-            key={col.key}
-            className="bg-white dark:bg-gray-800 p-4 rounded shadow border border-gray-200 dark:border-gray-700"
+            key={status}
+            className="bg-white dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-700 shadow"
           >
-            <h4 className="font-semibold mb-3">{col.title}</h4>
+            <h4 className="font-semibold mb-3 uppercase">{status}</h4>
             <div className="space-y-4">
-              {tasks.filter((t) => t.status === col.key).length === 0 && (
+              {tasks.filter(t => t.status === status).length === 0 && (
                 <p className="text-gray-500 dark:text-gray-400">Brak zadań.</p>
               )}
               {tasks
-                .filter((t) => t.status === col.key)
-                .map((task) => (
+                .filter(t => t.status === status)
+                .map(task => (
                   <div
                     key={task.id}
-                    className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-3 rounded"
+                    className="p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded"
                   >
                     <h5 className="font-medium">{task.name}</h5>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -69,18 +70,18 @@ export default function TaskBoard({ projectId }) {
                         {task.estimatedTime}h
                       </span>
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2 items-center">
-                      {col.key === "doing" && (
+                    <div className="mt-2 flex gap-2">
+                      {status === "doing" && (
                         <button
                           onClick={() => handleComplete(task.id)}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded"
+                          className="px-3 py-1 bg-green-600 text-white text-xs rounded"
                         >
                           Zakończ
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(task.id)}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded"
+                        className="px-3 py-1 bg-red-600 text-white text-xs rounded"
                       >
                         Usuń
                       </button>

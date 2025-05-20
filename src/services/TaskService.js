@@ -1,85 +1,31 @@
-class TaskService {
-  static getTasks() {
-    const tasks = localStorage.getItem("tasks")
-    return tasks ? JSON.parse(tasks) : []
-  }
+import {
+  collection,
+  doc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  where,
+  query,
+} from "firebase/firestore"
+import { db } from "../firebase"
 
-  static saveTasks(tasks) {
-    localStorage.setItem("tasks", JSON.stringify(tasks))
-    window.dispatchEvent(new Event("storage"))
-  }
+const tasksCol = collection(db, "tasks")
 
-  static getTasksForProject(projectId) {
-    return this.getTasks().filter((task) => task.projectId === projectId)
-  }
-
-  static getTaskById(taskId) {
-    return this.getTasks().find((task) => task.id === taskId)
-  }
-
-  static addTask(task) {
-    const tasks = this.getTasks()
-    const newTask = {
-      id: Date.now(),
-      name: task.name || "Nowe zadanie",
-      description: task.description || "",
-      priority: task.priority || "medium",
-      storyId: task.storyId,
-      projectId: task.projectId,
-      estimatedTime: task.estimatedTime || 0,
-      status: "todo",
-      createdAt: new Date().toISOString(),
-      startDate: null,
-      endDate: null,
-      assignedUser: null,
-    }
-    tasks.push(newTask)
-    this.saveTasks(tasks)
-  }
-
-  static updateTask(updatedTask) {
-    let tasks = this.getTasks()
-    tasks = tasks.map((task) =>
-      task.id === updatedTask.id ? { ...task, ...updatedTask } : task
-    )
-    this.saveTasks(tasks)
-  }
-
-  static deleteTask(taskId) {
-    let tasks = this.getTasks().filter((task) => task.id !== taskId)
-    this.saveTasks(tasks)
-  }
-
-  static assignUser(taskId, userId) {
-    let tasks = this.getTasks()
-    tasks = tasks.map((task) => {
-      if (task.id === taskId) {
-        return {
-          ...task,
-          assignedUser: userId,
-          status: "doing",
-          startDate: new Date().toISOString(),
-        }
-      }
-      return task
-    })
-    this.saveTasks(tasks)
-  }
-
-  static completeTask(taskId) {
-    let tasks = this.getTasks()
-    tasks = tasks.map((task) => {
-      if (task.id === taskId) {
-        return {
-          ...task,
-          status: "done",
-          endDate: new Date().toISOString(),
-        }
-      }
-      return task
-    })
-    this.saveTasks(tasks)
-  }
+export default {
+  async getTasksForProject(projectId) {
+    // bez orderBy, żeby nie wymagać indeksu
+    const q = query(tasksCol, where("projectId", "==", projectId))
+    const snap = await getDocs(q)
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  },
+  async addTask(task) {
+    await addDoc(tasksCol, { ...task, status: "todo", createdAt: Date.now() })
+  },
+  async updateTask(id, data) {
+    await updateDoc(doc(tasksCol, id), { ...data, updatedAt: Date.now() })
+  },
+  async deleteTask(id) {
+    await deleteDoc(doc(tasksCol, id))
+  },
 }
-
-export default TaskService

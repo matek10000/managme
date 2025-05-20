@@ -15,46 +15,43 @@ export default function Home() {
   const user = AuthService.getUser()
   const isGuest = user?.role === "guest"
 
+  // Załaduj wszystkie projekty
   useEffect(() => {
-    setProjects(ProjectService.getProjects())
-    setCurrentProject(ProjectService.getCurrentProject())
-    const onStorage = () => {
-      setProjects(ProjectService.getProjects())
-      setCurrentProject(ProjectService.getCurrentProject())
+    async function load() {
+      const all = await ProjectService.getProjects()
+      setProjects(all)
     }
-    window.addEventListener("storage", onStorage)
-    return () => window.removeEventListener("storage", onStorage)
+    load()
   }, [])
 
-  const handleSelectProject = (e) => {
-    const id = Number(e.target.value)
-    const proj = projects.find((p) => p.id === id)
-    if (proj) {
-      ProjectService.setCurrentProject(proj)
-      setCurrentProject({ ...proj })
-      setEditMode(false)
+  // Gdy wybierzesz projekt, pobierz jego szczegóły
+  const handleSelectProject = async (e) => {
+    const id = e.target.value
+    if (!id) {
+      setCurrentProject(null)
+      return
     }
+    const proj = await ProjectService.getProject(id)
+    setCurrentProject(proj)
+    setEditMode(false)
   }
 
-  const handleDeleteProject = () => {
+  const handleDeleteProject = async () => {
     if (isGuest || !currentProject) return
-    ProjectService.deleteProject(currentProject.id)
-    setProjects(ProjectService.getProjects())
+    await ProjectService.deleteProject(currentProject.id)
+    const all = await ProjectService.getProjects()
+    setProjects(all)
     setCurrentProject(null)
     setEditMode(false)
   }
 
-  const handleEditProject = () => {
+  const handleEditProject = async () => {
     if (isGuest || !currentProject) return
-    const updated = { ...currentProject, name, description }
-    ProjectService.updateProject(updated)
-    const all = ProjectService.getProjects()
+    await ProjectService.updateProject(currentProject.id, { name, description })
+    const updated = await ProjectService.getProject(currentProject.id)
+    setCurrentProject(updated)
+    const all = await ProjectService.getProjects()
     setProjects(all)
-    const refreshed = all.find((p) => p.id === updated.id)
-    if (refreshed) {
-      setCurrentProject(refreshed)
-      ProjectService.setCurrentProject(refreshed)
-    }
     setEditMode(false)
   }
 
@@ -93,13 +90,11 @@ export default function Home() {
           </label>
           <select
             id="projectSelect"
-            value={currentProject ? currentProject.id : ""}
+            value={currentProject?.id || ""}
             onChange={handleSelectProject}
             className="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:outline-none"
           >
-            <option value="" disabled>
-              – wybierz –
-            </option>
+            <option value="">– wybierz –</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -181,7 +176,7 @@ export default function Home() {
                 {/* Historyjki */}
                 <section>
                   <h3 className="text-xl font-semibold mb-2">📚 Historyjki</h3>
-                  <Stories />
+                  <Stories projectId={currentProject.id} />
                 </section>
 
                 {/* Tablica zadań */}

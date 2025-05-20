@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+fbadmin.json
 
 # Editor directories and files
 .vscode/*
