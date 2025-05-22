@@ -1,5 +1,3 @@
-// src/components/Stories.jsx
-
 import React, { useState, useEffect } from "react"
 import ProjectService from "../services/ProjectService"
 

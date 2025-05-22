@@ -1,4 +1,3 @@
-// src/components/StoriesModal.jsx
 import React from "react"
 
 export default function StoriesModal({ stories, onSelect, onClose }) {
