@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import ProjectService from "../services/ProjectService"
+import AuthService from "../services/AuthService"
 
 export default function Stories({ projectId }) {
   const [stories, setStories] = useState([])
@@ -13,6 +14,9 @@ export default function Stories({ projectId }) {
   const [editingId, setEditingId] = useState(null)
   const [editValues, setEditValues] = useState({ name: "", description: "" })
 
+  const user = AuthService.getUser()
+  const isGuest = user?.role === "guest"
+
   useEffect(() => {
     if (!projectId) return
     ;(async () => {
@@ -22,7 +26,7 @@ export default function Stories({ projectId }) {
   }, [projectId])
 
   const handleAdd = async () => {
-    if (!newStory.name.trim()) return
+    if (isGuest || !newStory.name.trim()) return
     await ProjectService.addStory(projectId, newStory)
     const list = await ProjectService.getStories(projectId)
     setStories(list)
@@ -30,6 +34,7 @@ export default function Stories({ projectId }) {
   }
 
   const handleUpdate = async (id, fields = editValues) => {
+    if (isGuest) return
     await ProjectService.updateStory(projectId, id, fields)
     const list = await ProjectService.getStories(projectId)
     setStories(list)
@@ -37,6 +42,7 @@ export default function Stories({ projectId }) {
   }
 
   const handleDelete = async (id) => {
+    if (isGuest) return
     await ProjectService.deleteStory(projectId, id)
     const list = await ProjectService.getStories(projectId)
     setStories(list)
@@ -47,8 +53,6 @@ export default function Stories({ projectId }) {
 
   return (
     <div data-cy="stories">
-      {/* tylko formularz i lista, bez nagłówka */}
-
       {/* Filtr */}
       <div className="flex gap-2 mb-4">
         {[
@@ -69,39 +73,41 @@ export default function Stories({ projectId }) {
       </div>
 
       {/* Dodawanie */}
-      <div data-cy="story-form" className="flex gap-2 mb-6">
-        <input
-          data-cy="story-name"
-          placeholder="Nazwa"
-          value={newStory.name}
-          onChange={e => setNewStory({ ...newStory, name: e.target.value })}
-          className="border p-2 flex-1"
-        />
-        <input
-          data-cy="story-desc"
-          placeholder="Opis"
-          value={newStory.description}
-          onChange={e => setNewStory({ ...newStory, description: e.target.value })}
-          className="border p-2 flex-1"
-        />
-        <select
-          data-cy="story-priority"
-          value={newStory.priority}
-          onChange={e => setNewStory({ ...newStory, priority: e.target.value })}
-          className="border p-2"
-        >
-          <option value="low">Niski</option>
-          <option value="medium">Średni</option>
-          <option value="high">Wysoki</option>
-        </select>
-        <button
-          data-cy="story-add"
-          onClick={handleAdd}
-          className="bg-blue-600 text-white px-4 rounded"
-        >
-          Dodaj
-        </button>
-      </div>
+      {!isGuest && (
+        <div data-cy="story-form" className="flex gap-2 mb-6">
+          <input
+            data-cy="story-name"
+            placeholder="Nazwa"
+            value={newStory.name}
+            onChange={e => setNewStory({ ...newStory, name: e.target.value })}
+            className="border p-2 flex-1"
+          />
+          <input
+            data-cy="story-desc"
+            placeholder="Opis"
+            value={newStory.description}
+            onChange={e => setNewStory({ ...newStory, description: e.target.value })}
+            className="border p-2 flex-1"
+          />
+          <select
+            data-cy="story-priority"
+            value={newStory.priority}
+            onChange={e => setNewStory({ ...newStory, priority: e.target.value })}
+            className="border p-2"
+          >
+            <option value="low">Niski</option>
+            <option value="medium">Średni</option>
+            <option value="high">Wysoki</option>
+          </select>
+          <button
+            data-cy="story-add"
+            onClick={handleAdd}
+            className="bg-blue-600 text-white px-4 rounded"
+          >
+            Dodaj
+          </button>
+        </div>
+      )}
 
       {/* Lista historyjek */}
       <ul data-cy="story-list" className="space-y-4">
@@ -154,25 +160,27 @@ export default function Stories({ projectId }) {
                   <option value="doing">W trakcie</option>
                   <option value="done">Zakończone</option>
                 </select>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    data-cy="story-edit"
-                    onClick={() => {
-                      setEditingId(story.id)
-                      setEditValues({ name: story.name, description: story.description })
-                    }}
-                    className="bg-yellow-500 text-white px-3 rounded"
-                  >
-                    Edytuj
-                  </button>
-                  <button
-                    data-cy="story-delete"
-                    onClick={() => handleDelete(story.id)}
-                    className="bg-red-600 text-white px-3 rounded"
-                  >
-                    Usuń
-                  </button>
-                </div>
+                {!isGuest && (
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      data-cy="story-edit"
+                      onClick={() => {
+                        setEditingId(story.id)
+                        setEditValues({ name: story.name, description: story.description })
+                      }}
+                      className="bg-yellow-500 text-white px-3 rounded"
+                    >
+                      Edytuj
+                    </button>
+                    <button
+                      data-cy="story-delete"
+                      onClick={() => handleDelete(story.id)}
+                      className="bg-red-600 text-white px-3 rounded"
+                    >
+                      Usuń
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </li>

@@ -33,7 +33,7 @@ export default function Home() {
     setEditMode(false)
   }
 
-  // Pozostałe akcje (delete/edit)
+  // Usuń projekt
   const handleDeleteProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.deleteProject(currentProject.id)
@@ -42,6 +42,7 @@ export default function Home() {
     setEditMode(false)
   }
 
+  // Zapisz zmiany projektu
   const handleEditProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.updateProject(currentProject.id, { name, description })
@@ -55,8 +56,8 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Dodawanie projektu */}
-        <ProjectForm onProjectAdded={loadProjects} />
+        {/* Dodawanie projektu - goście nie widzą formy */}
+        {!isGuest && <ProjectForm onProjectAdded={loadProjects} />}
 
         {/* Przycisk otwierający modal z projektami */}
         <div>
