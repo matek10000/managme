@@ -1,3 +1,4 @@
+// src/services/TaskService.js
 import {
   collection,
   doc,
@@ -5,27 +6,60 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  where,
   query,
+  orderBy,
+  where
 } from "firebase/firestore"
 import { db } from "../firebase"
 
-const tasksCol = collection(db, "tasks")
+// referencja do subkolekcji "tasks" pod danym projektem
+function tasksCol(projectId) {
+  return collection(db, "projects", projectId, "tasks")
+}
 
 export default {
+  /** pobiera wszystkie zadania dla projektu, posortowane po utworzeniu */
   async getTasksForProject(projectId) {
-    // bez orderBy, żeby nie wymagać indeksu
-    const q = query(tasksCol, where("projectId", "==", projectId))
+    const q = query(tasksCol(projectId), orderBy("createdAt", "asc"))
     const snap = await getDocs(q)
     return snap.docs.map(d => ({ id: d.id, ...d.data() }))
   },
-  async addTask(task) {
-    await addDoc(tasksCol, { ...task, status: "todo", createdAt: Date.now() })
+
+  /** dodaje nowe zadanie do Firestore */
+  async addTask({ projectId, storyId, name, description, priority, estimatedTime }) {
+    const now = Date.now()
+    await addDoc(tasksCol(projectId), {
+      storyId,
+      name,
+      description,
+      priority,
+      estimatedTime,
+      status: "todo",
+      createdAt: now,
+      startDate: null,
+      endDate: null,
+      assignedUser: null
+    })
   },
-  async updateTask(id, data) {
-    await updateDoc(doc(tasksCol, id), { ...data, updatedAt: Date.now() })
+
+  /** aktualizuje dowolne pola zadania */
+  async updateTask(projectId, taskId, data) {
+    const ref = doc(tasksCol(projectId), taskId)
+    await updateDoc(ref, { ...data, updatedAt: Date.now() })
   },
-  async deleteTask(id) {
-    await deleteDoc(doc(tasksCol, id))
+
+  /** oznacza zadanie jako zakończone */
+  async completeTask(projectId, taskId) {
+    const ref = doc(tasksCol(projectId), taskId)
+    await updateDoc(ref, {
+      status: "done",
+      endDate: Date.now(),
+    })
   },
+
+  /** usuwa zadanie */
+  async deleteTask(projectId, taskId) {
+    const ref = doc(tasksCol(projectId), taskId)
+    await deleteDoc(ref)
+  }
 }

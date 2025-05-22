@@ -1,5 +1,4 @@
 // src/components/TaskBoard.jsx
-
 import React, { useState, useEffect } from "react"
 import TaskService from "../services/TaskService"
 import ProjectService from "../services/ProjectService"
@@ -21,56 +20,59 @@ export default function TaskBoard({ projectId }) {
   const user = AuthService.getUser()
   const isGuest = user?.role === "guest"
 
-  // załaduj zadania przy zmianie projectId
   useEffect(() => {
     if (!projectId) return
-    refreshTasks()
-    setSelectedStory(null)
+    loadAll()
   }, [projectId])
 
-  // helper do odświeżania zadań
-  const refreshTasks = async () => {
-    const t = await TaskService.getTasksForProject(projectId)
-    setTasks(t)
+  const loadAll = async () => {
+    setTasks(await TaskService.getTasksForProject(projectId))
+    setStories(await ProjectService.getStories(projectId))
+    setSelectedStory(null)
   }
 
-  // helper do odświeżania historyjek
-  const refreshStories = async () => {
-    const s = await ProjectService.getStories(projectId)
-    setStories(s)
-  }
-
-  // obsługa otwarcia modalu: odśwież historie + pokaż modal
   const openStories = async () => {
-    await refreshStories()
+    setStories(await ProjectService.getStories(projectId))
     setShowModal(true)
   }
 
   const handleAdd = async () => {
     if (isGuest || !selectedStory || !newTask.name.trim()) return
     await TaskService.addTask({
-      ...newTask,
       projectId,
       storyId: selectedStory.id,
+      name: newTask.name,
+      description: newTask.description,
+      priority: newTask.priority,
       estimatedTime: Number(newTask.estimatedTime) || 0,
     })
     setNewTask({ name: "", description: "", priority: "medium", estimatedTime: "" })
-    await refreshTasks()
+    setTasks(await TaskService.getTasksForProject(projectId))
   }
 
-  const handleComplete = async (id) => {
+  const changeStatus = async (taskId, newStatus) => {
     if (isGuest) return
-    await TaskService.completeTask(id)
-    await refreshTasks()
+    // Poprawne wywołanie: projectId, taskId, dane do update
+    await TaskService.updateTask(projectId, taskId, { status: newStatus })
+    setTasks(await TaskService.getTasksForProject(projectId))
   }
 
-  const handleDelete = async (id) => {
+  const handleComplete = async (taskId) => {
     if (isGuest) return
-    await TaskService.deleteTask(id)
-    await refreshTasks()
+    // Teraz Firestore: completeTask(projectId, taskId)
+    await TaskService.completeTask(projectId, taskId)
+    setTasks(await TaskService.getTasksForProject(projectId))
+  }
+
+  const handleDelete = async (taskId) => {
+    if (isGuest) return
+    await TaskService.deleteTask(projectId, taskId)
+    setTasks(await TaskService.getTasksForProject(projectId))
   }
 
   const columns = ["todo", "doing", "done"]
+  const nextStatus = { todo: "doing", doing: "done" }
+  const prevStatus = { doing: "todo", done: "doing" }
 
   return (
     <div data-cy="task-board" className="space-y-6">
@@ -88,9 +90,7 @@ export default function TaskBoard({ projectId }) {
       {showModal && (
         <StoriesModal
           stories={stories}
-          onSelect={story => {
-            setSelectedStory(story)
-          }}
+          onSelect={story => setSelectedStory(story)}
           onClose={() => setShowModal(false)}
         />
       )}
@@ -99,7 +99,6 @@ export default function TaskBoard({ projectId }) {
       <div data-cy="task-form" className="space-y-2">
         <input
           data-cy="task-name"
-          type="text"
           placeholder="Nazwa zadania"
           value={newTask.name}
           onChange={e => setNewTask({ ...newTask, name: e.target.value })}
@@ -162,30 +161,43 @@ export default function TaskBoard({ projectId }) {
                   <div
                     key={task.id}
                     data-cy="task-card"
-                    className="p-3 border rounded"
+                    className="p-3 border rounded flex flex-col gap-2"
                   >
-                    <h5 className="font-medium">{task.name}</h5>
-                    <p className="text-sm">{task.description}</p>
-                    <p className="text-xs">
-                      Priorytet: <strong>{task.priority}</strong>
-                    </p>
-                    <p className="text-xs">
-                      Czas: <strong>{task.estimatedTime}h</strong>
-                    </p>
-                    <div className="mt-2 flex gap-2">
-                      {status === "doing" && (
+                    <div>
+                      <h5 className="font-medium">{task.name}</h5>
+                      <p className="text-sm">{task.description}</p>
+                      <p className="text-xs">
+                        Priorytet: <strong>{task.priority}</strong>
+                      </p>
+                      <p className="text-xs">
+                        Czas: <strong>{task.estimatedTime}h</strong>
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      {prevStatus[status] && (
                         <button
-                          data-cy="task-complete"
-                          onClick={() => handleComplete(task.id)}
-                          className="px-3 py-1 bg-blue-500 text-white text-xs rounded"
+                          data-cy="task-prev"
+                          onClick={() => changeStatus(task.id, prevStatus[status])}
+                          className="text-xl hover:text-gray-700"
+                          title={`Przenieś do ${prevStatus[status]}`}
                         >
-                          Zakończ
+                          ⏪
+                        </button>
+                      )}
+                      {nextStatus[status] && (
+                        <button
+                          data-cy="task-next"
+                          onClick={() => changeStatus(task.id, nextStatus[status])}
+                          className="text-xl hover:text-gray-700"
+                          title={`Przenieś do ${nextStatus[status]}`}
+                        >
+                          ▶️
                         </button>
                       )}
                       <button
                         data-cy="task-delete"
                         onClick={() => handleDelete(task.id)}
-                        className="px-3 py-1 bg-red-500 text-white text-xs rounded"
+                        className="ml-auto px-2 py-1 bg-red-500 text-white text-xs rounded"
                       >
                         Usuń
                       </button>
