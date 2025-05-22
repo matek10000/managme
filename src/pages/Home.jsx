@@ -1,13 +1,16 @@
+// src/pages/Home.jsx
 import React, { useState, useEffect } from "react"
 import ProjectService from "../services/ProjectService"
 import AuthService from "../services/AuthService"
 import Stories from "../components/Stories"
 import TaskBoard from "../components/TaskBoard"
 import ProjectForm from "../components/ProjectForm"
+import ProjectsModal from "../components/ProjectsModal"
 
 export default function Home() {
   const [projects, setProjects] = useState([])
   const [currentProject, setCurrentProject] = useState(null)
+  const [showModal, setShowModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -15,7 +18,7 @@ export default function Home() {
   const user = AuthService.getUser()
   const isGuest = user?.role === "guest"
 
-  // Załaduj listę projektów
+  // Ładowanie projektów
   const loadProjects = async () => {
     const all = await ProjectService.getProjects()
     setProjects(all)
@@ -25,19 +28,13 @@ export default function Home() {
     loadProjects()
   }, [])
 
-  // Kiedy wybierzesz z dropdowna
-  const handleSelectProject = async (e) => {
-    const id = e.target.value
-    if (!id) {
-      setCurrentProject(null)
-      return
-    }
-    const proj = await ProjectService.getProject(id)
+  // Ustaw projekt po wyborze z modal
+  const handleSelectProject = (proj) => {
     setCurrentProject(proj)
     setEditMode(false)
   }
 
-  //Usuń
+  // Pozostałe akcje (delete/edit) jak wcześniej...
   const handleDeleteProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.deleteProject(currentProject.id)
@@ -46,7 +43,6 @@ export default function Home() {
     setEditMode(false)
   }
 
-  //Edytuj
   const handleEditProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.updateProject(currentProject.id, { name, description })
@@ -59,28 +55,33 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+
         {/* Dodawanie projektu */}
         <ProjectForm onProjectAdded={loadProjects} />
 
-        {/* Wybór projektu */}
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-          <label htmlFor="projectSelect" className="font-medium">
-            Wybierz projekt:
-          </label>
-          <select
-            id="projectSelect"
-            value={currentProject?.id || ""}
-            onChange={handleSelectProject}
-            className="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow-sm focus:outline-none"
+        {/* Przycisk otwierający modal z projektami */}
+        <div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded"
           >
-            <option value="">– wybierz –</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            Projekty
+          </button>
+          {currentProject && (
+            <span className="ml-4 text-lg">
+              Aktywny projekt: <strong>{currentProject.name}</strong>
+            </span>
+          )}
         </div>
+
+        {/* Modal wyboru projektu */}
+        {showModal && (
+          <ProjectsModal
+            projects={projects}
+            onClose={() => setShowModal(false)}
+            onSelect={handleSelectProject}
+          />
+        )}
 
         {/* Szczegóły projektu */}
         {currentProject ? (
@@ -123,12 +124,8 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-2xl font-semibold">
-                      {currentProject.name}
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {currentProject.description}
-                    </p>
+                    <h2 className="text-2xl font-semibold">{currentProject.name}</h2>
+                    <p className="text-gray-600 dark:text-gray-300">{currentProject.description}</p>
                   </div>
                   {!isGuest && (
                     <div className="flex gap-3">
@@ -152,13 +149,11 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Historyjki */}
                 <section>
                   <h3 className="text-xl font-semibold mb-2">📚 Historyjki</h3>
                   <Stories projectId={currentProject.id} />
                 </section>
 
-                {/* Tablica zadań */}
                 <section>
                   <h3 className="text-xl font-semibold mb-2">📋 Zadania</h3>
                   <TaskBoard projectId={currentProject.id} />
