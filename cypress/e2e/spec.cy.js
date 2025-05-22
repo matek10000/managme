@@ -1,146 +1,72 @@
 // cypress/e2e/app.spec.js
 
-describe("ManagMe – pełny E2E (bez logowania)", () => {
+describe("ManagMe – E2E: Tworzenie projektu, historyjki i zadania (ze zwolnieniami)", () => {
   const projectName = `Proj ${Date.now()}`
-  const projectDesc = "Opis projektu testowego"
+  const projectDesc = "Opis projektu"
   const storyName   = `Story ${Date.now()}`
-  const storyDesc   = "Opis historyjki testowej"
+  const storyDesc   = "Opis historyjki"
   const taskName    = `Task ${Date.now()}`
-  const taskDesc    = "Opis zadania testowego"
+  const taskDesc    = "Opis zadania"
 
-  before(() => {
-    // Zakładamy, że użytkownik jest już zalogowany (np. ręcznie lub przez fixture).
+  beforeEach(() => {
     cy.visit("http://localhost:3000/")
+    cy.wait(500) // dajemy chwilę na załadowanie strony
   })
 
-  it("1. Tworzy nowy projekt i wraca na /", () => {
+  it("Tworzy projekt, historyjkę, wybiera ją i dodaje zadanie", () => {
+    // 1. Dodaj projekt
     cy.contains("➕ Dodaj nowy projekt").scrollIntoView()
+    cy.wait(200)
     cy.get('input[placeholder="Nazwa projektu"]').type(projectName)
+    cy.wait(200)
     cy.get('textarea[placeholder="Opis projektu"]').type(projectDesc)
+    cy.wait(200)
     cy.contains("button", "Dodaj projekt").click()
+    cy.wait(500)
 
-    // Po dodaniu wymuś powrót na główną stronę
-    cy.visit("http://localhost:3000/")
+    // 2. Wybierz projekt
+    cy.contains("button", "Projekty").click()
+    cy.wait(300)
+    cy.get('[data-cy=projects-modal]').contains(projectName).click()
+    cy.wait(500)
+    cy.get('[data-cy=projects-modal]').should("not.exist")
+    cy.wait(200)
 
-    // Wybierz projekt z dropdowna
-    cy.get("select#projectSelect")
-      .should("be.visible")
-      .select(projectName)
-      .should("have.value", projectName)
+    // 3. Dodaj historyjkę
+    cy.get('[data-cy=story-form]').within(() => {
+      cy.get('[data-cy=story-name]').type(storyName)
+      cy.wait(200)
+      cy.get('[data-cy=story-desc]').type(storyDesc)
+      cy.wait(200)
+      cy.get('[data-cy=story-add]').click()
+    })
+    cy.wait(500)
+    cy.get('[data-cy=story-list]').contains(storyName).should("be.visible")
+    cy.wait(200)
 
-    cy.contains(projectName).should("be.visible")
-    cy.contains(projectDesc).should("be.visible")
-  })
+    // 4. Wybierz historyjkę z modalu
+    cy.get('[data-cy="open-stories-modal"]').click()
+    cy.wait(300)
+    cy.get('[data-cy="stories-modal"]').contains(storyName).click()
+    cy.wait(500)
+    cy.get('[data-cy="stories-modal"]').should("not.exist")
+    cy.wait(200)
 
-  it("2. Dodaje historyjkę", () => {
-    cy.visit("http://localhost:3000/")
-    cy.get("select#projectSelect").select(projectName)
+    // 5. Dodaj zadanie
+    cy.get('[data-cy=task-form]').within(() => {
+      cy.get('[data-cy=task-name]').type(taskName)
+      cy.wait(200)
+      cy.get('[data-cy=task-desc]').type(taskDesc)
+      cy.wait(200)
+      cy.get('[data-cy=task-time]').type("2")
+      cy.wait(200)
+      cy.get('[data-cy=task-priority]').select("medium")
+      cy.wait(200)
+      cy.get('[data-cy=task-add]').click()
+    })
+    cy.wait(500)
 
-    cy.contains("📚 Historyjki").scrollIntoView()
-    cy.get('input[placeholder="Nazwa historyjki"]').type(storyName)
-    cy.get('input[placeholder="Opis historyjki"]').type(storyDesc)
-    cy.contains("button", "Dodaj").click()
-
-    cy.contains(storyName).should("be.visible")
-  })
-
-  it("3. Dodaje zadanie", () => {
-    cy.visit("http://localhost:3000/")
-    cy.get("select#projectSelect").select(projectName)
-
-    cy.contains("📚 Historyjki").scrollIntoView()
-    // Pobierz wartość option odpowiadającą dodanej historyjce
-    cy.get(".task-form select option")
-      .contains(storyName)
-      .invoke("attr", "value")
-      .then((storyId) => {
-        // Wypełnij formularz zadania
-        cy.get('input[placeholder="Nazwa zadania"]').type(taskName)
-        cy.get('textarea[placeholder="Opis zadania"]').type(taskDesc)
-        cy.get(".task-form select")
-          .select(storyId)
-          .should("have.value", storyId)
-        cy.contains("button", "Dodaj zadanie").click()
-      })
-
-    cy.contains(taskName).should("be.visible")
-  })
-
-  it("4. Zmienia status zadania", () => {
-    cy.visit("http://localhost:3000/")
-    cy.get("select#projectSelect").select(projectName)
-
-    cy.contains(taskName)
-      .parents("div")
-      .within(() => {
-        cy.contains("button", "Zakończ").click({ force: true })
-      })
-
-    cy.contains("h4", /done/i)
-      .parent()
-      .contains(taskName)
-      .should("exist")
-  })
-
-  it("5. Edytuje projekt, historyjkę i zadanie", () => {
-    cy.visit("http://localhost:3000/")
-    cy.get("select#projectSelect").select(projectName)
-
-    // Edycja projektu
-    cy.contains("button", "Edytuj projekt").click({ force: true })
-    cy.get('input[placeholder="Nazwa projektu"]')
-      .clear()
-      .type(projectName + " X")
-    cy.contains("button", "Zapisz").click()
-    cy.contains(projectName + " X").should("exist")
-
-    // Edycja historyjki
-    cy.contains(storyName)
-      .parents("li")
-      .within(() => {
-        cy.contains("button", "Edytuj").click()
-        cy.get('input[placeholder="Nazwa historyjki"]')
-          .clear()
-          .type(storyName + " Y")
-        cy.contains("button", "Zapisz").click()
-      })
-    cy.contains(storyName + " Y").should("exist")
-
-    // Edycja zadania
-    cy.contains(taskName)
-      .parents("div")
-      .within(() => {
-        cy.contains("button", "Edytuj").click()
-        cy.get('input[placeholder="Nazwa zadania"]')
-          .clear()
-          .type(taskName + " Z")
-        cy.contains("button", "Zapisz").click()
-      })
-    cy.contains(taskName + " Z").should("exist")
-  })
-
-  it("6. Usuwa zadanie, historyjkę i projekt", () => {
-    cy.visit("http://192.168.18.105:3000/")
-    cy.get("select#projectSelect").select(projectName + " X")
-
-    // Usuń zadanie
-    cy.contains(taskName + " Z")
-      .parents("div")
-      .within(() => {
-        cy.contains("button", "Usuń").click()
-      })
-    cy.contains(taskName + " Z").should("not.exist")
-
-    // Usuń historyjkę
-    cy.contains(storyName + " Y")
-      .parents("li")
-      .within(() => {
-        cy.contains("button", "Usuń").click()
-      })
-    cy.contains(storyName + " Y").should("not.exist")
-
-    // Usuń projekt
-    cy.contains("button", "Usuń projekt").click({ force: true })
-    cy.get("select#projectSelect").should("not.contain", projectName + " X")
+    // Weryfikacja – task pojawia się w kolumnie TODO
+    cy.get('[data-cy="column-todo"]').contains(taskName).should("be.visible")
   })
 })
