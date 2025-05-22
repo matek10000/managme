@@ -1,4 +1,3 @@
-// src/pages/Home.jsx
 import React, { useState, useEffect } from "react"
 import ProjectService from "../services/ProjectService"
 import AuthService from "../services/AuthService"
@@ -28,13 +27,13 @@ export default function Home() {
     loadProjects()
   }, [])
 
-  // Ustaw projekt po wyborze z modal
+  // Ustawienie projektu po wyborze z modal
   const handleSelectProject = (proj) => {
     setCurrentProject(proj)
     setEditMode(false)
   }
 
-  // Pozostałe akcje (delete/edit) jak wcześniej...
+  // Pozostałe akcje (delete/edit)
   const handleDeleteProject = async () => {
     if (isGuest || !currentProject) return
     await ProjectService.deleteProject(currentProject.id)

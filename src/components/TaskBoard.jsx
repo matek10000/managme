@@ -1,4 +1,3 @@
-// src/components/TaskBoard.jsx
 import React, { useState, useEffect } from "react"
 import TaskService from "../services/TaskService"
 import ProjectService from "../services/ProjectService"
@@ -52,14 +51,12 @@ export default function TaskBoard({ projectId }) {
 
   const changeStatus = async (taskId, newStatus) => {
     if (isGuest) return
-    // Poprawne wywołanie: projectId, taskId, dane do update
     await TaskService.updateTask(projectId, taskId, { status: newStatus })
     setTasks(await TaskService.getTasksForProject(projectId))
   }
 
   const handleComplete = async (taskId) => {
     if (isGuest) return
-    // Teraz Firestore: completeTask(projectId, taskId)
     await TaskService.completeTask(projectId, taskId)
     setTasks(await TaskService.getTasksForProject(projectId))
   }

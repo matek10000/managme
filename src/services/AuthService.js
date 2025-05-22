@@ -9,33 +9,26 @@ import {
   import { auth, googleProvider } from "../firebase"
   
   const USER_KEY = "fm_user"
-  const ADMIN_EMAIL = "matekofficial@interia.pl"  // <-- ustaw tutaj swój adres admina
+  const ADMIN_EMAIL = "matekofficial@interia.pl"  // <- mail admina
   
   export default {
-    // Google OAuth
     loginWithGoogle: () => signInWithPopup(auth, googleProvider),
   
-    // Email/Password
     loginWithEmail: (email, password) =>
       signInWithEmailAndPassword(auth, email, password),
     registerWithEmail: (email, password) =>
       createUserWithEmailAndPassword(auth, email, password),
   
-    // Logout
     logout: () => {
       localStorage.removeItem(USER_KEY)
       return signOut(auth)
     },
   
-    // Nasłuchuj zmiany stanu logowania
     onAuthChange: (callback) => {
       return onAuthStateChanged(auth, async (user) => {
         if (user) {
-          // Pobierz claims (role z Cloud Function)
           const { claims } = await getIdTokenResult(user)
-          // Domyślna rola z claims lub guest
           let role = claims.role || "guest"
-          // Hard-code: jeśli email to ADMIN_EMAIL, nadpisz na 'admin'
           if (user.email === ADMIN_EMAIL) {
             role = "admin"
           }
@@ -54,7 +47,7 @@ import {
       })
     },
   
-    // Pobierz usera
+    // Pobiera usera
     getUser: () => {
       try {
         return JSON.parse(localStorage.getItem(USER_KEY))
@@ -63,7 +56,7 @@ import {
       }
     },
   
-    // Sprawdź czy guest
+    // Sprawdza czy guest
     isGuest: () => {
       const u = JSON.parse(localStorage.getItem(USER_KEY))
       return u?.role === "guest"

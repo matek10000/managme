@@ -1,4 +1,3 @@
-// src/services/TaskService.js
 import {
   collection,
   doc,
@@ -12,7 +11,7 @@ import {
 } from "firebase/firestore"
 import { db } from "../firebase"
 
-// referencja do subkolekcji "tasks" pod danym projektem
+// odnosi sie do "tasks"
 function tasksCol(projectId) {
   return collection(db, "projects", projectId, "tasks")
 }
@@ -42,13 +41,13 @@ export default {
     })
   },
 
-  /** aktualizuje dowolne pola zadania */
+  /** aktualizuje pola zadania */
   async updateTask(projectId, taskId, data) {
     const ref = doc(tasksCol(projectId), taskId)
     await updateDoc(ref, { ...data, updatedAt: Date.now() })
   },
 
-  /** oznacza zadanie jako zakończone */
+  /** oznacza zadanie jako done */
   async completeTask(projectId, taskId) {
     const ref = doc(tasksCol(projectId), taskId)
     await updateDoc(ref, {

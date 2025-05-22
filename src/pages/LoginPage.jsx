@@ -4,7 +4,7 @@ import AuthService from "../services/AuthService"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [mode, setMode] = useState("login") // "login" lub "register"
+  const [mode, setMode] = useState("login")
   const [error, setError] = useState("")
 
   const handleEmailAuth = async (e) => {
@@ -78,7 +78,7 @@ export default function LoginPage() {
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded"
         >
-          {/* ikona Google jak wcześniej */}
+          {/* ikona Google*/}
           Zaloguj przez Google
         </button>
 
