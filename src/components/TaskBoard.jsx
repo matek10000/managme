@@ -25,13 +25,18 @@ export default function TaskBoard({ projectId }) {
   }, [projectId])
 
   const loadAll = async () => {
-    setTasks(await TaskService.getTasksForProject(projectId))
-    setStories(await ProjectService.getStories(projectId))
+    // Pobierz wszystkie zadania projektu (z każdej story) 
+    const allTasks = await TaskService.getTasksForProject(projectId)
+    setTasks(allTasks)
+    // Pobierz listę historii, żeby w modal się wyświetlały
+    const list = await ProjectService.getStories(projectId)
+    setStories(list)
     setSelectedStory(null)
   }
 
   const openStories = async () => {
-    setStories(await ProjectService.getStories(projectId))
+    const list = await ProjectService.getStories(projectId)
+    setStories(list)
     setShowModal(true)
   }
 
@@ -46,24 +51,26 @@ export default function TaskBoard({ projectId }) {
       estimatedTime: Number(newTask.estimatedTime) || 0,
     })
     setNewTask({ name: "", description: "", priority: "medium", estimatedTime: "" })
+    // odśwież wszystkie zadania
     setTasks(await TaskService.getTasksForProject(projectId))
   }
 
-  const changeStatus = async (taskId, newStatus) => {
+  const changeStatus = async (task, newStatus) => {
     if (isGuest) return
-    await TaskService.updateTask(projectId, taskId, { status: newStatus })
+    // podajemy projectId, storyId i taskId
+    await TaskService.updateTask(projectId, task.storyId, task.id, { status: newStatus })
     setTasks(await TaskService.getTasksForProject(projectId))
   }
 
-  const handleComplete = async (taskId) => {
+  const handleComplete = async (task) => {
     if (isGuest) return
-    await TaskService.completeTask(projectId, taskId)
+    await TaskService.completeTask(projectId, task.storyId, task.id)
     setTasks(await TaskService.getTasksForProject(projectId))
   }
 
-  const handleDelete = async (taskId) => {
+  const handleDelete = async (task) => {
     if (isGuest) return
-    await TaskService.deleteTask(projectId, taskId)
+    await TaskService.deleteTask(projectId, task.storyId, task.id)
     setTasks(await TaskService.getTasksForProject(projectId))
   }
 
@@ -73,8 +80,8 @@ export default function TaskBoard({ projectId }) {
 
   return (
     <div data-cy="task-board" className="space-y-6">
-      {/* Wybór historyjki */}
-      <div className="mb-4">
+      {/* Wybór story */}
+      {!isGuest && (
         <button
           data-cy="open-stories-modal"
           onClick={openStories}
@@ -82,8 +89,7 @@ export default function TaskBoard({ projectId }) {
         >
           {selectedStory ? `Story: ${selectedStory.name}` : "Wybierz historyjkę"}
         </button>
-      </div>
-
+      )}
       {showModal && (
         <StoriesModal
           stories={stories}
@@ -95,8 +101,8 @@ export default function TaskBoard({ projectId }) {
         />
       )}
 
-      {/* Formularz dodawania zadania */}
-      {!isGuest && (
+      {/* Formularz dodawania */}
+      {!isGuest && selectedStory && (
         <div data-cy="task-form" className="space-y-2">
           <input
             data-cy="task-name"
@@ -135,28 +141,23 @@ export default function TaskBoard({ projectId }) {
           <button
             data-cy="task-add"
             onClick={handleAdd}
-            disabled={!selectedStory}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
           >
             Dodaj zadanie
           </button>
         </div>
       )}
 
-      {/* Kolumny zadań */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Kolumny */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {columns.map(status => (
           <div
             key={status}
             data-cy={`column-${status}`}
-            className="p-4 bg-white dark:bg-gray-800 rounded border"
+            className="p-4 bg-white dark:bg-gray-800 rounded-lg border"
           >
-            <h4 className="font-semibold mb-3 uppercase">{status}</h4>
+            <h4 className="text-center font-semibold mb-3 uppercase">{status}</h4>
             <div className="space-y-4">
-              {tasks.filter(t => t.status === status && t.storyId === selectedStory?.id)
-                .length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400">Brak zadań.</p>
-              )}
               {tasks
                 .filter(t => t.status === status && t.storyId === selectedStory?.id)
                 .map(task => (
@@ -165,23 +166,19 @@ export default function TaskBoard({ projectId }) {
                     data-cy="task-card"
                     className="p-3 border rounded flex flex-col gap-2"
                   >
-                    <div>
-                      <h5 className="font-medium">{task.name}</h5>
-                      <p className="text-sm">{task.description}</p>
-                      <p className="text-xs">
-                        Priorytet: <strong>{task.priority}</strong>
-                      </p>
-                      <p className="text-xs">
-                        Czas: <strong>{task.estimatedTime}h</strong>
-                      </p>
-                    </div>
+                    <h5 className="font-medium">{task.name}</h5>
+                    <p className="text-sm">{task.description}</p>
+                    <p className="text-xs">
+                      Priorytet: <strong>{task.priority}</strong>
+                    </p>
+                    <p className="text-xs">
+                      Czas: <strong>{task.estimatedTime}h</strong>
+                    </p>
                     <div className="mt-2 flex items-center gap-2">
                       {!isGuest && prevStatus[status] && (
                         <button
                           data-cy="task-prev"
-                          onClick={() => changeStatus(task.id, prevStatus[status])}
-                          className="text-xl hover:text-gray-700"
-                          title={`Przenieś do ${prevStatus[status]}`}
+                          onClick={() => changeStatus(task, prevStatus[status])}
                         >
                           ⏪
                         </button>
@@ -189,9 +186,7 @@ export default function TaskBoard({ projectId }) {
                       {!isGuest && nextStatus[status] && (
                         <button
                           data-cy="task-next"
-                          onClick={() => changeStatus(task.id, nextStatus[status])}
-                          className="text-xl hover:text-gray-700"
-                          title={`Przenieś do ${nextStatus[status]}`}
+                          onClick={() => changeStatus(task, nextStatus[status])}
                         >
                           ▶️
                         </button>
@@ -199,8 +194,8 @@ export default function TaskBoard({ projectId }) {
                       {!isGuest && (
                         <button
                           data-cy="task-delete"
-                          onClick={() => handleDelete(task.id)}
-                          className="ml-auto px-2 py-1 bg-red-500 text-white text-xs rounded"
+                          onClick={() => handleDelete(task)}
+                          className="ml-auto px-2 py-1 bg-red-500 text-white rounded"
                         >
                           Usuń
                         </button>
@@ -208,6 +203,10 @@ export default function TaskBoard({ projectId }) {
                     </div>
                   </div>
                 ))}
+
+              {tasks.filter(t => t.status === status && t.storyId === selectedStory?.id).length === 0 && (
+                <p className="text-center text-gray-500">Brak zadań.</p>
+              )}
             </div>
           </div>
         ))}

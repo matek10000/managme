@@ -1,33 +1,54 @@
 import {
   collection,
   doc,
-  getDocs,
   addDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
   query,
   orderBy,
+  collectionGroup,
   where
 } from "firebase/firestore"
 import { db } from "../firebase"
 
-// odnosi sie do "tasks"
-function tasksCol(projectId) {
-  return collection(db, "projects", projectId, "tasks")
+// helper: kolekcja tasków dla danej historyjki
+function tasksCol(projectId, storyId) {
+  return collection(db, "projects", projectId, "stories", storyId, "tasks")
 }
 
 export default {
-  /** pobiera wszystkie zadania dla projektu, posortowane po utworzeniu */
+  /** Pobiera wszystkie taski w projekcie (ze wszystkich story) */
   async getTasksForProject(projectId) {
-    const q = query(tasksCol(projectId), orderBy("createdAt", "asc"))
+    const q = query(
+      collectionGroup(db, "tasks"),
+      where("projectId", "==", projectId),
+      orderBy("createdAt", "asc")
+    )
+    const snap = await getDocs(q)
+    return snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+      // firestore path: projects/{projectId}/stories/{storyId}/tasks/{taskId}
+      storyId: d.ref.parent.parent.id
+    }))
+  },
+
+  /** Pobiera jedynie taski dla jednej story */
+  async getTasksForStory(projectId, storyId) {
+    const q = query(
+      tasksCol(projectId, storyId),
+      orderBy("createdAt", "asc")
+    )
     const snap = await getDocs(q)
     return snap.docs.map(d => ({ id: d.id, ...d.data() }))
   },
 
-  /** dodaje nowe zadanie do Firestore */
+  /** Dodaje task do podkolekcji danej story */
   async addTask({ projectId, storyId, name, description, priority, estimatedTime }) {
     const now = Date.now()
-    await addDoc(tasksCol(projectId), {
+    await addDoc(tasksCol(projectId, storyId), {
+      projectId,
       storyId,
       name,
       description,
@@ -37,28 +58,25 @@ export default {
       createdAt: now,
       startDate: null,
       endDate: null,
-      assignedUser: null
+      assignedUser: null,
     })
   },
 
-  /** aktualizuje pola zadania */
-  async updateTask(projectId, taskId, data) {
-    const ref = doc(tasksCol(projectId), taskId)
+  /** Aktualizuje task (koniecznie podaj projectId, storyId, taskId) */
+  async updateTask(projectId, storyId, taskId, data) {
+    const ref = doc(tasksCol(projectId, storyId), taskId)
     await updateDoc(ref, { ...data, updatedAt: Date.now() })
   },
 
-  /** oznacza zadanie jako done */
-  async completeTask(projectId, taskId) {
-    const ref = doc(tasksCol(projectId), taskId)
-    await updateDoc(ref, {
-      status: "done",
-      endDate: Date.now(),
-    })
+  /** Ustawia status done */
+  async completeTask(projectId, storyId, taskId) {
+    const ref = doc(tasksCol(projectId, storyId), taskId)
+    await updateDoc(ref, { status: "done", endDate: Date.now() })
   },
 
-  /** usuwa zadanie */
-  async deleteTask(projectId, taskId) {
-    const ref = doc(tasksCol(projectId), taskId)
+  /** Usuwa task */
+  async deleteTask(projectId, storyId, taskId) {
+    const ref = doc(tasksCol(projectId, storyId), taskId)
     await deleteDoc(ref)
   }
 }
